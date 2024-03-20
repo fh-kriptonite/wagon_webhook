@@ -1,0 +1,6 @@
+
+run node webhook
+node webhook_server.js
+
+run ngrok
+ngrok http http://localhost:3000
