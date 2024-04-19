@@ -17,7 +17,9 @@ function fetchCMCPrice(coinId) {
         .then(data => {
             // Process the fetched data here
             console.log('Fetched data:', data.data);
-            createCoinPriceService(data.data.symbol, data.data.quote.USD.price)
+            if(data.data.quote.USD.price != null) {
+                createCoinPriceService(data.data.symbol, data.data.quote.USD.price)
+            }
         })
         .catch(error => {
             console.error('There was a problem fetching the data:', error);
@@ -30,12 +32,34 @@ const startCMCService = () => {
     const fetchInterval = 900000; // Fetch data every 600 seconds
 
     // fetch WAG price
-    fetchCMCPrice(28557)
-    setInterval(() => fetchCMCPrice(28557), fetchInterval);
+    try {
+        fetchCMCPrice(28557);   
+    } catch (error) {
+        console.log(error);
+    }
+
+    setInterval(() => {
+        try {
+            fetchCMCPrice(28557);   
+        } catch (error) {
+            console.log(error);
+        }
+    }, fetchInterval);
 
     // fetch IDRT price
-    fetchCMCPrice(4702)
-    setInterval(() => fetchCMCPrice(4702), fetchInterval);
+    try {
+        fetchCMCPrice(4702);   
+    } catch (error) {
+        console.log(error);
+    }
+
+    setInterval(() => {
+        try {
+            fetchCMCPrice(4702);
+        } catch (error) {
+            console.log(error);
+        }
+    }, fetchInterval);
 };
 
 module.exports = { startCMCService };
