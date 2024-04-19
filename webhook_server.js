@@ -20,7 +20,8 @@ app.post('/webhook', (req, res) => {
   const data = req.body;
 
   // Perform actions based on the received data
-  console.log('Received data:', data);
+  console.log('Received data:');
+  console.log(data);
   console.log("############################")
 
   try {
@@ -29,6 +30,9 @@ app.post('/webhook', (req, res) => {
       if(logCount > 0) {
         const log = data[0].logs[logCount-1];
         const parsedLog = iface.parseLog(log);
+
+        console.log('parsed log:');
+        console.log(parsedLog);
 
         if(parsedLog.name == "PoolCreated") {
           createLendingPoolService(
@@ -51,25 +55,25 @@ app.post('/webhook', (req, res) => {
 
         } else if(parsedLog.name == "Borrow") {
           createLendingBorrowService(
-            parseFloat(parsedLog.args[1]), 
-            parsedLog.args[2], 
-            (parsedLog.args[3]).toString(), 
+            parseFloat(parsedLog.args[0]), 
+            parsedLog.args[1], 
+            (parsedLog.args[2]).toString(), 
             (parseInt(log.blockNumber, 16)).toString(), 
             log.transactionHash, 
             process.env.BNB_CHAIN_NAME
           )
           
           updatePoolService(
-            parseFloat(parsedLog.args[1]), 
+            parseFloat(parsedLog.args[0]), 
             2,
             process.env.BNB_CHAIN_NAME
           )
 
         } else if(parsedLog.name == "Repayment") {
           createLendingRepaymentService(
-            parseFloat(parsedLog.args[1]), 
-            parsedLog.args[2], 
-            (parsedLog.args[3]).toString(), 
+            parseFloat(parsedLog.args[0]), 
+            parsedLog.args[1], 
+            (parsedLog.args[2]).toString(), 
             (parseInt(log.blockNumber, 16)).toString(), 
             log.transactionHash, 
             process.env.BNB_CHAIN_NAME
@@ -77,23 +81,25 @@ app.post('/webhook', (req, res) => {
 
         } else if(parsedLog.name == "ClaimInterest") {
           createLendingClaimInterestService(
-            parseFloat(parsedLog.args[1]), 
-            parsedLog.args[2], 
+            parseFloat(parsedLog.args[0]), 
+            parsedLog.args[1], 
+            (parsedLog.args[2]).toString(), 
             (parsedLog.args[3]).toString(), 
-            (parsedLog.args[4]).toString(), 
             (parseInt(log.blockNumber, 16)).toString(), 
             log.transactionHash, 
             process.env.BNB_CHAIN_NAME
           );
 
-          if(parseFloat(parsedLog.args[4]) > 0) {
+          if(parseFloat(parsedLog.args[3]) > 0) {
               updatePoolService(
-                  parseFloat(parsedLog.args[1]), 
+                  parseFloat(parsedLog.args[0]), 
                   3,
                   process.env.BNB_CHAIN_NAME
               )
           }
         }
+
+        console.log("############################")
       }
     } 
   } catch (error) {
@@ -109,7 +115,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Webhook server is running on port ${PORT}`);
 });
-
-// Start CMC service
-const { startCMCService } = require("./controllers/cmc_listener_controller")
-startCMCService();
