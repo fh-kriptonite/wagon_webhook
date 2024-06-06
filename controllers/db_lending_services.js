@@ -151,6 +151,45 @@ module.exports = {
             }
         });
     },
+    repaymentUpdatePoolService: (poolId, amount, network) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                connection.getConnection(function(err, conn) {
+                    if(err) {
+                        connection.releaseConnection(conn);
+                        throw err;
+                    }
+
+                    conn.query(`SELECT SUM(currency_amount) as totalAmount FROM lending_lends WHERE pool_id = ?`,
+                        [poolId],
+                        (err, results) => {
+                            if(err) {
+                                connection.releaseConnection(conn);
+                                throw err;
+                            }
+
+                            const totalAmount = results[0].totalAmount;
+
+                            if(totalAmount <= amount) {
+                                conn.query(
+                                    `UPDATE lending_pools SET status = 3 where pool_id = ? and network = ?`,
+                                    [poolId, network],
+                                    (err, updateResults, fields) => {
+                                        if(err) reject(err);
+                                        resolve(updateResults);
+                                });
+                            }
+                        }
+                    )
+                    
+                    connection.releaseConnection(conn);
+                })
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+        });
+    },
     getPoolService: (status) => {
         return new Promise(async (resolve, reject) => {
             try {

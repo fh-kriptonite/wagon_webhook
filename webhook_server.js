@@ -1,7 +1,7 @@
 // Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
-const { createLendingPoolService, createLendingLendService, createLendingBorrowService, updatePoolService, createLendingRepaymentService, createLendingClaimInterestService } = require('./controllers/db_lending_services');
+const { createLendingPoolService, createLendingLendService, createLendingBorrowService, updatePoolService, createLendingRepaymentService, createLendingClaimInterestService, repaymentUpdatePoolService } = require('./controllers/db_lending_services');
 const abi = require('./ABI/lending.json');
 const { ethers } = require('ethers');
 require('dotenv').config();
@@ -76,6 +76,12 @@ app.post('/webhook', (req, res) => {
             (parsedLog.args[2]).toString(), 
             (parseInt(log.blockNumber, 16)).toString(), 
             log.transactionHash, 
+            process.env.BNB_CHAIN_NAME
+          )
+
+          repaymentUpdatePoolService(
+            parseFloat(parsedLog.args[0]), 
+            (parsedLog.args[2]).toString(), 
             process.env.BNB_CHAIN_NAME
           )
 
