@@ -1,7 +1,7 @@
 // Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
-const { createLendingPoolService, createLendingLendService, createLendingBorrowService, updatePoolService, createLendingRepaymentService, createLendingClaimInterestService, repaymentUpdatePoolService } = require('./controllers/db_lending_services');
+const { createLendingPoolService, createLendingLendService, createLendingBorrowService, updatePoolService, createLendingRepaymentService, createLendingClaimInterestService, repaymentUpdatePoolService, createLendingBalanceService, updateLendingBalanceService, updatePrincipalLendingBalanceService } = require('./controllers/db_lending_services');
 const abi = require('./ABI/lending.json');
 const { ethers } = require('ethers');
 require('dotenv').config();
@@ -50,6 +50,13 @@ app.post('/webhook', (req, res) => {
             (parsedLog.args[3]).toString(), 
             (parseInt(log.blockNumber, 16)).toString(), 
             log.transactionHash, 
+            process.env.BNB_CHAIN_NAME
+          )
+
+          createLendingBalanceService(
+            parseFloat(parsedLog.args[1]), 
+            parsedLog.args[0],
+            (parsedLog.args[2]).toString(),
             process.env.BNB_CHAIN_NAME
           )
 
@@ -102,6 +109,62 @@ app.post('/webhook', (req, res) => {
                   3,
                   process.env.BNB_CHAIN_NAME
               )
+
+              updatePrincipalLendingBalanceService(
+                parseFloat(parsedLog.args[0]), 
+                parsedLog.args[1],
+                0,
+                process.env.BNB_CHAIN_NAME
+              )
+          }
+        } else if(parsedLog.name == "TransferSingle") {
+          for(let i=0; i<logCount; i++) {
+            const logClaimInterest = data[0].logs[i];
+            const parsedLogClaimInterest = iface.parseLog(logClaimInterest);
+
+            if(parsedLogClaimInterest == null) continue;
+
+            if(parsedLogClaimInterest.name == "TransferSingle") {
+              console.log('parsed log transfer single:');
+              console.log(parsedLogClaimInterest);
+
+              updateLendingBalanceService(
+                parseFloat(parsedLog.args[3]), 
+                parsedLog.args[1],
+                -1 * parseFloat(parsedLog.args[4]), 
+                process.env.BNB_CHAIN_NAME
+              )
+
+              updateLendingBalanceService(
+                parseFloat(parsedLog.args[3]), 
+                parsedLog.args[2],
+                parseFloat(parsedLog.args[4]), 
+                process.env.BNB_CHAIN_NAME
+              )
+            }
+
+            if(parsedLogClaimInterest.name == "ClaimInterest") {
+              console.log('parsed log claim interest:');
+              console.log(parsedLogClaimInterest);
+              
+              createLendingClaimInterestService(
+                parseFloat(parsedLogClaimInterest.args[0]), 
+                parsedLogClaimInterest.args[1], 
+                (parsedLogClaimInterest.args[2]).toString(), 
+                (parsedLogClaimInterest.args[3]).toString(),
+                (parseInt(log.blockNumber, 16)).toString(), 
+                log.transactionHash, 
+                process.env.BNB_CHAIN_NAME
+              );
+    
+              if(parseFloat(parsedLogClaimInterest.args[3]) > 0) {
+                  updatePoolService(
+                      parseFloat(parsedLogClaimInterest.args[0]), 
+                      3,
+                      process.env.BNB_CHAIN_NAME
+                  )
+              }
+            }
           }
         }
 

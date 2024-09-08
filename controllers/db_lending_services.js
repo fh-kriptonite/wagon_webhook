@@ -292,5 +292,106 @@ module.exports = {
                 reject(error);
             }
         });
-    }
+    },
+    createLendingBalanceService: (poolId, lender, balance, network) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                connection.getConnection(function(err, conn) {
+                    if(err) {
+                        connection.releaseConnection(conn);
+                        throw err;
+                    }
+                    conn.query(
+                        `INSERT INTO lending_balances (pool_id, lender, balance, network) values ( ?, ?, ?, ? )`, 
+                        [poolId, lender, balance, network],
+                        (err, results, fields) => {
+                            if(err) reject(err);
+                            resolve(results);
+                    });
+                    
+                    connection.releaseConnection(conn);
+                })
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+        });
+    },
+    updateLendingBalanceService: (poolId, lender, balance, network) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                connection.getConnection(function(err, conn) {
+                    if (err) {
+                        connection.releaseConnection(conn);
+                        return reject(err);
+                    }
+    
+                    // First, attempt to update the row
+                    conn.query(
+                        `UPDATE lending_balances 
+                        SET balance = CAST(balance AS SIGNED) + ? 
+                        WHERE pool_id = ? AND lender = ? AND network = ?`, 
+                        [balance, poolId, lender, network],
+                        (err, results) => {
+                            if (err) {
+                                connection.releaseConnection(conn);
+                                return reject(err);
+                            }
+    
+                            // Check if any rows were affected by the update
+                            if (results.affectedRows === 0) {
+                                // If no rows were updated, insert a new row
+                                conn.query(
+                                    `INSERT INTO lending_balances (pool_id, lender, balance, network) 
+                                    VALUES (?, ?, ?, ?)`, 
+                                    [poolId, lender, balance, network],
+                                    (err, results) => {
+                                        connection.releaseConnection(conn);
+                                        if (err) return reject(err);
+                                        resolve(results);
+                                    }
+                                );
+                            } else {
+                                // If the update succeeded, return the results
+                                connection.releaseConnection(conn);
+                                resolve(results);
+                            }
+                        }
+                    );
+                });
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+        });
+    },
+    updatePrincipalLendingBalanceService: (poolId, lender, balance, network) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                connection.getConnection(function(err, conn) {
+                    if (err) {
+                        connection.releaseConnection(conn);
+                        return reject(err);
+                    }
+    
+                    // First, attempt to update the row
+                    conn.query(
+                        `UPDATE lending_balances 
+                        SET balance = ? 
+                        WHERE pool_id = ? AND lender = ? AND network = ?`, 
+                        [balance, poolId, lender, network],
+                        (err, results) => {
+                            if (err) {
+                                connection.releaseConnection(conn);
+                                return reject(err);
+                            }
+                        }
+                    );
+                });
+            } catch (error) {
+                console.log(error);
+                reject(error);
+            }
+        });
+    }    
 }
