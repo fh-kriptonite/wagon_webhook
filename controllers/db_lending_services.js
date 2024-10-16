@@ -302,7 +302,10 @@ module.exports = {
                         throw err;
                     }
                     conn.query(
-                        `INSERT INTO lending_balances (pool_id, lender, balance, network) values ( ?, ?, ?, ? )`, 
+                        `INSERT INTO lending_balances (pool_id, lender, balance, network)
+                            VALUES (?, ?, ?, ?)
+                            ON DUPLICATE KEY UPDATE
+                                balance = balance + VALUES(balance);`, 
                         [poolId, lender, balance, network],
                         (err, results, fields) => {
                             if(err) reject(err);
