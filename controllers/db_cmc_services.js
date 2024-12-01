@@ -4,6 +4,8 @@ module.exports = {
     createCoinPriceService: (coinName, usdPrice) => {
         return new Promise(async (resolve, reject) => {
             try {
+                if(usdPrice == NULL) resolve([]);
+
                 connection.getConnection(function(err, conn) {
                     if(err) {
                         connection.releaseConnection(conn);

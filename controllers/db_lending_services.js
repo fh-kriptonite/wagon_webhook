@@ -10,8 +10,8 @@ module.exports = {
                         throw err;
                     }
                     conn.query(
-                        `INSERT INTO lending_pools (pool_id, currency, network, status, block, transaction_hash)
-                        VALUES (?, ?, ?, 1, ?, ?)
+                        `INSERT INTO lending_pools (pool_id, currency, network, status, block, transaction_hash, type)
+                        VALUES (?, ?, ?, 1, ?, ?, "")
                         ON DUPLICATE KEY UPDATE 
                             currency = VALUES(currency),
                             network = VALUES(network),
